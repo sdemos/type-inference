@@ -11,3 +11,6 @@ proof for the soundness and completeness of the relation.
 
 For the Hindley/Milner calculus, we prove that the rewriting rules are
 equivalent to the result of the well known algorithm W.
+
+This project is based on the paper "A Rewriting Semantics for Type Inference"
+by George Kuan, David MacQueen, and Robert Bruce Findler.
