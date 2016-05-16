@@ -1,0 +1,114 @@
+\documentclass[12pt]{article}
+
+\usepackage[letterpaper, margin=1.4in]{geometry}
+\linespread{1.3}
+
+\title{A Formalization of ``A Rewriting Semantics for Type Inference'' in Coq}
+\author{Stephen Demos}
+
+\begin{document}
+
+\maketitle
+
+The project that I worked on for the Software Foundations independent study was
+to formalize the descriptions of the rewriting semantics described in the paper
+``A Rewriting Semantics for Type Inference'' by George Kuan, David MacQueen,
+and Robert Bruce Findler.
+
+The idea presented in the paper is that instead of teaching type inference to
+students as the classical recursive typing relation, it would be more effective
+to teach a rewriting style type inference. The authors argue that this approach
+is more natural and intuitive, and so it doesn't take as long for students to
+understand, and then once they understand the intuition, professors can move on
+to the more widely used typing standards.
+
+In the paper, the authors describe the rules for rewriting relations for three
+different languages, SLTC, ULC (where the type annotation on the bound
+parameter is erased), and SLTC with let-polymorphism. In each section of the
+paper, the authors list some interesting theorems about their rewriting
+relation, as well as a sketch of the proof for each of them.
+
+Most of my time on the project was spend on the formalization of the first
+section of the paper, which went over the rewriting semantics for the STLC.
+This included writing the relations, translating the theorems written in the
+paper to theorems that Coq could understand, and attempting to prove them.
+
+I went through several approaches for this portion. The main differences had to
+do with how I represented the types and terms in the STLC. The crux of the
+problem comes from the way that the paper describes the syntax. The authors use
+two different expression representations. First they show the classic
+description of the STLC, with separate types and terms. Then they present a new
+expression type, which has types and terms combined, for the rewriting
+semantics. References to their relations use these two representations
+interchangeably, because they have the same syntax. However, Coq is not a fan
+of this kind of implicit switching between types, and so machinery has to be
+built up that is not reflected in the paper. 
+
+The first approach that I took was the most obvious. For this approach, I just
+wrote out all of the relations as they were described in the paper. This
+approach is clean looking in the definitions section of the Coq script, but the
+problem becomes obvious as soon as you try to write the Coq theorems that are
+analogous to the presented theorems.
+
+The second approach is a modification of the first one. This approach included
+the functions \texttt{inj}, which converted terms to mixed expressions, and
+\texttt{proj}, which converted mixed expressions to an Option that contained
+STLC types, and nothing if the mixed expression contained more than just types.
+This approach is in the file \texttt{stlc.v}.
+
+The second approach allows for a Coq theorem that is closer to the original
+theorem. The only difference is that it includes explicit conversions. There
+are a couple of problems with this approach. First, this approach would be much
+more tedious to expand to larger languages. The types and terms of the STLC are
+repeated several times throughout the script. This isn't as much of a problem
+for this specific application, because this is more of a proof-of-concept than
+an extensible platform for language development, but it is something that is
+important to keep in mind when designing these sorts of systems. Second, having
+the conversions laying around makes the proof more difficult. 
+
+The third approach that I attempted makes the Coq theorem look almost exactly
+like the stated theorem in the paper. The trick in this approach was that I
+only had one representation of types and terms of the STLC. The only types were
+mixed expressions, and I had several propositions that checked if a mixed
+expression was a type, a term, a value, etc. These predicates were used when
+building the relations, as well as a quick little check at the beginning of the
+theorems, which was the only difference.
+
+This approach allowed for much clearer theorems. However, it can be difficult
+to make sure that all of the constructors that need predicates actually have
+them. Normally the work of making sure all of the constructors have the correct
+type of data coming in is machine checked, however, this approach removes the
+ability for Coq to see that in exchange for more flexibility.
+
+For the proofs themselves, the issues I ran into were centered around the
+substitution. I have not been able to figure out how to get the substitution
+out of the picture so that I can use the induction hypothesis. Part of the
+difficulty, I suspect, comes from that although the final outcome of the
+classical typing relation and the rewriting relation are the same, they don't
+take even close to the same kinds or number of steps to get there. This makes
+it more difficult to actually state and prove their equivalence.
+
+There was a difference between the Coq proof and the proof sketch in the paper
+that I found interesting as well. In the paper, for the first theorem, they say
+that the proof goes through easily with induction on the typing derivation.
+When this is attempted in Coq, however, the proof gets stuck on the first case
+of proving the typing derivation for a variable. This is because variables
+don't have a way to step to anything in the rewriting semantics. This seems to
+be a symptom of the problem I was describing earlier, where the rewriting
+relation and typing derivation don't take the same path to get to their
+solution, even though the solution is the same. This can be solved by inducting
+on the expression instead of the typing derivation, and then using inversion on
+the typing derivation to clear out the impossible cases that come out of that.
+
+Probably the biggest lesson that I got from doing this project is that
+formalizing something in a language like Coq can be much different than
+formalizing it in the real world. Coq is a lot more rigid, because you are
+trying to express your proofs in a set language instead of convincing another
+person. The Coq approach gives much more confidence in the outcome than you
+might have otherwise, but it also requires you to be much more explicit about
+the behaviors that you are expecting from your relations and theorems than you
+might otherwise have to be. This gave me insight into what elements of a formal
+system to watch out for when I am thinking about formalizing something in Coq
+or another proof assistant. 
+
+\end{document}
